@@ -35,8 +35,11 @@ class Mapper(object, metaclass=MapperMeta):
         return self.__page_url__.format(**context)
 
     def fetch_page(self, page_url, **context):
-        cookies = context.get('cookies', {})
-        page_text = requests.get(page_url, cookies=cookies).text
+        session = context.get('session', {})
+        if session:
+            page_text = session.get(page_url).text
+        else:
+            page_text = requests.get(page_url).text
         soup = bs4.BeautifulSoup(page_text, features='lxml')
         return soup, context
 
