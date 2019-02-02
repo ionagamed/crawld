@@ -53,7 +53,7 @@ class Mapper(object, metaclass=MapperMeta):
                     **context
                 )
                 if not value and field.required:
-                    raise ParsingError(field.field_name, 'this field is required')
+                    raise ParsingError(field.name, 'this field is required')
                 obj[field.name] = value
 
             objects.append(obj)
