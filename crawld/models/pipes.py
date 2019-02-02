@@ -21,33 +21,30 @@ class Pipe:
 
         self.required = required
 
-    def select(self, selector, first=True, many=False):
-        @operator('select', selector, first=first)
+    def select(self, selector, **options):
+        @operator('select', selector)
         def wrapper(data, **kwargs):
             def mapping(value):
-                value = value.select(selector)
-                if first:
-                    value = value[0]
-                return value
-            return self._apply(mapping, data, many)
+                return value.select(selector)
+            return self._apply(mapping, data, **options)
         self.operators.append(wrapper)
         return self
 
-    def attribute(self, name, many=False):
+    def attribute(self, name, **options):
         @operator('attribute', name)
         def wrapper(data, **kwargs):
             def mapping(value):
                 return value[name]
-            return self._apply(mapping, data, many)
+            return self._apply(mapping, data, **options)
         self.operators.append(wrapper)
         return self
 
-    def text(self, many=False):
+    def text(self, **options):
         @operator('text')
         def wrapper(data, **kwargs):
             def mapping(value):
                 return value.text
-            return self._apply(mapping, data, many)
+            return self._apply(mapping, data, **options)
         self.operators.append(wrapper)
         return self
 
@@ -58,21 +55,21 @@ class Pipe:
         self.operators.append(wrapper)
         return self
 
-    def function(self, fn, many=False):
+    def function(self, fn, **options):
         @operator('function', fn)
         def wrapper(data, **kwargs):
             def mapping(value):
                 return fn(value, **kwargs)
-            return self._apply(mapping, data, many)
+            return self._apply(mapping, data, **options)
         self.operators.append(wrapper)
         return self
 
-    def spawn(self, mapper, many=False):
+    def spawn(self, mapper, **options):
         @operator('spawn', mapper)
         def wrapper(data, **kwargs):
             def mapping(value):
                 return mapper().parse_data(soup=value, **kwargs)
-            return self._apply(mapping, data, many)
+            return self._apply(mapping, data, **options)
         self.operators.append(wrapper)
         return self
 
@@ -98,11 +95,19 @@ class Pipe:
         self.name = name
         self.mapper = mapper
 
-    def _apply(self, mapping, data, many=True):
+    def _apply(self, mapping, data, **options):
+        many = options.get('many', False)
+        first = options.get('first', False)
+
+        def arg_mapping(x):
+            if first:
+                x = x[0]
+            return x
+
         if many:
-            return [mapping(x) for x in data]
+            return [mapping(arg_mapping(x)) for x in data]
         else:
-            return mapping(data)
+            return mapping(arg_mapping(data))
 
     def __repr__(self):
         pipeline = []
