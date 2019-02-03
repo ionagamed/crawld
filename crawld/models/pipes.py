@@ -73,6 +73,29 @@ class Pipe:
         self.operators.append(wrapper)
         return self
 
+    def first_element(self):
+        @operator('first_element')
+        def wrapper(data, **kwargs):
+            return data[0]
+        self.operators.append(wrapper)
+        return self
+
+    def every_first_element(self):
+        @operator('every_first_element')
+        def wrapper(data, **kwargs):
+            return [x[0] for x in data]
+        self.operators.append(wrapper)
+        return self
+
+    def strip(self, **options):
+        @operator('strip')
+        def wrapper(data, **kwargrs):
+            def mapping(value):
+                return value.strip()
+            return self._apply(mapping, data, **options)
+        self.operators.append(wrapper)
+        return self
+
     def clone(self):
         return Pipe(self.operators, self.required)
 
@@ -97,17 +120,13 @@ class Pipe:
 
     def _apply(self, mapping, data, **options):
         many = options.get('many', False)
-        first = options.get('first', False)
-
-        def arg_mapping(x):
-            if first:
-                x = x[0]
-            return x
 
         if many:
-            return [mapping(arg_mapping(x)) for x in data]
+            data = [mapping(x) for x in data]
         else:
-            return mapping(arg_mapping(data))
+            data = mapping(data)
+
+        return data
 
     def __repr__(self):
         pipeline = []
